@@ -4,12 +4,20 @@
 library playcanvas.js;
 
 import 'dart:html' show CanvasElement, Element;
+import 'dart:js';
 
 import 'package:js/js.dart';
 
+external int get MOUSEBUTTON_LEFT;
+external int get MOUSEBUTTON_RIGHT;
+external int get MOUSEBUTTON_MIDDLE;
+
+external String get EVENT_MOUSEDOWN;
+
+external String get EVENT_TOUCHSTART;
+
 @JS()
-@staticInterop
-abstract class AppBase {}
+abstract class AppBase extends EventHandler {}
 
 @JS()
 @anonymous
@@ -23,12 +31,30 @@ abstract class Application extends AppBase {
 
   external Entity get root;
   external GraphicsDevice get graphicsDevice;
+
+  external Mouse get mouse;
+  external TouchDevice get touch;
+}
+
+@JS()
+abstract class BoundingBox {
+  external factory BoundingBox([Vec3 center, Vec3 halfExtents]);
+  external Vec3 get center;
+  external Vec3 get halfExtents;
+
+  external bool intersectsRay(Ray ray, [Vec3 hitPosition]);
 }
 
 @JS()
 abstract class CameraComponent extends Component {
   external factory CameraComponent(ComponentSystem system, Entity entity);
   external set clearColor(Color color);
+
+  external num get nearClip;
+  external num get farClip;
+
+  external Vec3 screenToWorld(num screenx, num screeny, num cameraz,
+      [Vec3 worldCoord]);
 }
 
 @JS()
@@ -115,36 +141,40 @@ class ScreenOptions extends ComponentOptions {
 @JS()
 abstract class Entity extends GraphNode {
   external factory Entity([String name]);
-  external addComponent(String type, [ComponentOptions data]);
-  external addChild(GraphNode child);
-  external setPosition(num x, num y, num z);
-  external setEulerAngles(num x, num y, num z);
-  external rotate(num x, num y, num z);
-  external rotateLocal(num x, num y, num z);
-  external translateLocal(num x, num y, num z);
-  external translate(num x, num y, num z);
-  external setRotation(num x, num y, num z);
-  external setLocalRotation(num x, num y, num z);
-  external setLocalPosition(num x, num y, num z);
-  external setLocalEulerAngles(num x, num y, num z);
-  external setLocalScale(num x, num y, num z);
+  external void addChild(GraphNode child);
+  external void addComponent(String type, [ComponentOptions data]);
+  external void destroy();
+
+  external void rotate(num x, num y, num z);
+  external void rotateLocal(num x, num y, num z);
+  external void setEulerAngles(num x, num y, num z);
+  external void setLocalEulerAngles(num x, num y, num z);
+  external void setLocalRotation(num x, num y, num z);
+
+  external void setLocalScale(num x, num y, num z);
+
+  external void setPosition(num x, num y, num z);
+  external void setLocalPosition(num x, num y, num z);
+  external void setRotation(num x, num y, num z);
+
+  external void translate(num x, num y, num z);
+  external void translateLocal(num x, num y, num z);
+
+  external CameraComponent get camera;
+}
+
+typedef HandleEventCallback = Function(dynamic arg1, dynamic arg2, dynamic arg3,
+    dynamic arg4, dynamic arg5, dynamic arg6, dynamic arg7, dynamic arg8);
+
+HandleEventCallback singleArgCallback<T>(void callback(T arg)) {
+  return allowInterop(
+      (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) => callback(arg1 as T));
 }
 
 @JS()
 abstract class EventHandler {
   // https://developer.playcanvas.com/api/pc.html#HandleEventCallback
-  external void on(
-      String event,
-      void Function(
-              [dynamic arg1,
-              dynamic arg2,
-              dynamic arg3,
-              dynamic arg4,
-              dynamic arg5,
-              dynamic arg6,
-              dynamic arg7,
-              dynamic arg8])
-          callback);
+  external void on(String event, HandleEventCallback callback);
 }
 
 @JS()
@@ -176,6 +206,14 @@ abstract class Mouse extends EventHandler {
 }
 
 @JS()
+abstract class Ray {
+  external factory Ray([Vec3 origin, Vec3 direction]);
+
+  external Vec3 get origin;
+  external Vec3 get direction;
+}
+
+@JS()
 abstract class RenderComponent extends Component {
   external factory RenderComponent(ComponentSystem system, Entity entity);
   external set type(String type);
@@ -194,13 +232,21 @@ abstract class TouchDevice extends EventHandler {
 }
 
 @JS()
-@staticInterop
 abstract class Vec2 {
   external factory Vec2(num x, num y);
+
+  external num get x;
+  external num get y;
 }
 
 @JS()
-@staticInterop
 abstract class Vec3 {
-  external factory Vec3(num x, num y, num z);
+  external factory Vec3(double x, double y, double z);
+
+  external double get x;
+  external double get y;
+  external double get z;
+
+  external Vec3 sub(Vec3 other);
+  external Vec3 normalize();
 }
