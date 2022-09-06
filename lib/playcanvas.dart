@@ -4,7 +4,6 @@
 library playcanvas.js;
 
 import 'dart:html' show CanvasElement, Element;
-import 'dart:js';
 
 import 'package:js/js.dart';
 
@@ -166,7 +165,7 @@ abstract class Entity extends GraphNode {
 typedef HandleEventCallback = Function(dynamic arg1, dynamic arg2, dynamic arg3,
     dynamic arg4, dynamic arg5, dynamic arg6, dynamic arg7, dynamic arg8);
 
-HandleEventCallback singleArgCallback<T>(void callback(T arg)) {
+HandleEventCallback singleArgCallback<T>(void Function(T arg) callback) {
   return allowInterop(
       (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) => callback(arg1 as T));
 }
@@ -203,6 +202,11 @@ abstract class Material {
 @JS()
 abstract class Mouse extends EventHandler {
   external factory Mouse(Element element);
+}
+
+@JS()
+abstract class MouseEvent {
+  external int get button;
 }
 
 @JS()
